@@ -51,6 +51,9 @@ void closeLecture(studentList **studentHead, lectureList **lectureHead);
 void deleteStudent(studentList **head, lectureList **lectureHead);
 void updateRegister(char *code, int num, char *event);
 void studentsOfLecture(lectureList *lectureHead);
+void deleteLectureFromStudent(lectureList *lectureHead, studentList *studentHead);
+void deleteStudentFromLectures(lectureList *lectureHead, int idx);
+void printStudentSchedule(lectureList *lectureHead, studentList *studentHead);
 
 int main() {
     int menu;
@@ -87,7 +90,7 @@ int main() {
 				addLectureToStudent(studentHead, lectureHead);
                 break;
             case 4:
-                //deleteLectureFromStudent();
+                deleteLectureFromStudent(lectureHead, studentHead);
                 break;
             case 5:
                 newLecture(&lectureHead);
@@ -101,6 +104,7 @@ int main() {
 				break;
 			case 8:
 				//printingSpecicifProgramme
+				printStudentSchedule(lectureHead, studentHead);
 				break;
           	default:
 
@@ -433,7 +437,33 @@ void insertLectureByKey(lectureList **head, char code[10], char name[50], int ca
         newNode -> next = tmp -> next;
         tmp -> next = newNode;
     }
+}
+void printStudentSchedule(lectureList *lectureHead, studentList *studentHead) {
+	int tempNum;
+	char tempCode[20];
+	printf("Hangi ogrenci ? \n");
+	scanf("%d", &tempNum);
+	if (!isValidNumber(studentHead, tempNum)) {
+		printf("Gecersiz numara! \n");
+		return;
+	}
 
+	while (lectureHead != NULL)
+	{
+		int idx = 0, found = 0;
+		int attendency = lectureHead->attendency;
+		while (attendency > 0 && found == 0)
+		{
+			if (lectureHead->students[idx++] == tempNum)
+			{
+				idx--;
+				printf("%s\n", lectureHead->code);
+				found = 1;
+			}
+			attendency--;
+		}
+		lectureHead = lectureHead -> next;
+	}
 }
 void saveLectureList(lectureList *head) {
     lectureList *tmp;
@@ -463,6 +493,53 @@ void traverseLecture(lectureList *head) {
         tmp = tmp->next;
         printf("\n");
     }
+}
+void deleteLectureFromStudent(lectureList *lectureHead, studentList *studentHead) {
+	lectureList *ptr = lectureHead;
+	int tempNum;
+	char tempCode[20];
+	printf("Ogrencinin numarasini giriniz. \n");
+	scanf("%d", &tempNum);
+
+	if (!isValidNumber(studentHead, tempNum)) {
+		printf("Silmek istediginiz ogrenci kayitlarda bulunamadi. \n");
+		return;
+	}
+	printf("Hangi dersten silmek istiyorsunuz ?\n");
+	scanf("%s", tempCode);
+
+	while (ptr != NULL && strcmp(ptr -> code, tempCode) != 0) {
+		ptr = ptr -> next;
+	}
+	if (ptr == NULL) {
+		printf("Girdiginiz kodda ders bulunamamistir. \n");
+		return;
+	}
+	int idx = 0, found = 0;
+	int attendency = ptr ->  attendency;
+	while (attendency > 0 && found == 0) {
+		if (ptr -> students[idx++] == tempNum) {
+			idx--;
+			deleteStudentFromLectures(ptr, idx);
+			found = 1;
+		}
+		attendency--;
+	}
+	if (found == 0) {
+		printf("Girdiginiz derste sectiginiz ogrenci kayitli degildir. \n");
+		return;
+	}
+	//duzeltilmeli
+	while(studentHead -> num != tempNum) {
+		studentHead = studentHead -> next;
+	}
+	printf("credit %d\n", studentHead -> credit);
+	studentHead -> credit -= ptr -> credit;
+	printf("credit %d\n", studentHead -> credit);
+	studentHead -> lectureCount--;
+	updateRegister(tempCode, tempNum, "silindi");
+	saveStudentList(studentHead);
+	saveLectureList(lectureHead);
 }
 
 
@@ -561,17 +638,17 @@ void addStudent(studentList **studentHead) {
 
     saveStudentList(*studentHead);
 }
-void deleteStudentFromLectures(lectureList **lectureHead, int idx) {
-		int attendency = (*lectureHead) -> attendency;
+void deleteStudentFromLectures(lectureList *lectureHead, int idx) {
+		int attendency = lectureHead -> attendency;
 		if (idx != attendency - 1) {
 			while(idx + 1 < attendency) {
-				(*lectureHead) -> students[idx] = (*lectureHead) -> students[idx + 1];
+				lectureHead -> students[idx] = lectureHead -> students[idx + 1];
 				idx++;
 			}
 		}
 
-	(*lectureHead) -> students = (int*) realloc((*lectureHead) -> students, ((*lectureHead) -> attendency - 1) * sizeof (int));
-	(*lectureHead) -> attendency--;
+	lectureHead -> students = (int*) realloc(lectureHead -> students, (lectureHead -> attendency - 1) * sizeof (int));
+	lectureHead -> attendency--;
 }
 void deleteStudent(studentList **studentHead, lectureList **lectureHead) {
 
@@ -601,11 +678,9 @@ void deleteStudent(studentList **studentHead, lectureList **lectureHead) {
 		int idx = 0, found = 0;
 		int attendency = ptr ->  attendency;
 		while (attendency > 0 && found == 0) {
-			printf("idx = %d --- %d\n", idx, ptr ->students[idx]);
 			if (ptr ->students[idx++] == tempNum) {
 				idx--;
-				printf("Found at idx = %d\n", idx);
-				deleteStudentFromLectures(&ptr, idx);
+				deleteStudentFromLectures(ptr, idx);
 				found = 1;
 			}
 			attendency--;
