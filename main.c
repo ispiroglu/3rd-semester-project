@@ -61,6 +61,8 @@ void deleteLectureFromStudent(lecture *lectureHead, student *studentHead); //
 void deleteStudentFromLectures(lecture *lectureHead, int idx); //
 void scheduleOfStudent(lecture *lectureHead, student *studentHead); //
 
+void freeLecture(lecture **lectureHead);
+void freeStudents(student **studentHead);
 int main() {
     int menu;
 
@@ -127,6 +129,25 @@ int main() {
     }while (menu != -1);
     return 0;
 }
+void freeLecture(lecture **lectureHead) {
+	lecture *lectureNode = *lectureHead;
+	while (lectureNode != NULL) {
+		*(lectureHead) = lectureNode -> next;
+		free(lectureNode);
+		lectureNode = *lectureHead;
+	}
+}
+void freeStudents(student **studentHead) {
+	student  *studentNode = *studentHead;
+	while (studentNode != NULL) {
+		*(studentHead) = studentNode -> next;
+		free(studentNode);
+		studentNode = *studentHead;
+	}
+}
+
+
+
 void updateLecture(student *studentNode, lecture *lectureNode) {
 	lectureNode -> students = (int*)realloc(lectureNode -> students, (lectureNode -> attendency + 1) * sizeof (int));
 	insertionSort(lectureNode -> students, studentNode -> num, lectureNode -> attendency + 1);
@@ -257,6 +278,7 @@ void addLectureToStudent(student *studentHead, lecture *lectureHead){
 		lecture *lectureNode = existingLecture(lectureHead, tempCode);
 		if (lectureNode == NULL) {
 			printf("Sistemde boyle bir ders kaydi bulunmamaktadir. Ana menuye yonlendiriliyorsunuz.\n");
+			return;
 		} else {
 			int available = canRegister(studentNode, lectureNode);
 			if (available == 0) {
@@ -284,8 +306,8 @@ void updateRegister(char code[20], int num, char *date , char *event) {
     FILE *fptr, *tempFile;
     char tmp[255];
     char temp[5][60];
-    fptr = fopen("D:\\Workspaces\\C Workspace\\YapisalDonemProje\\kayit.txt", "r");
-	tempFile = fopen("D:\\Workspaces\\C Workspace\\YapisalDonemProje\\tempKayit.txt", "w");
+    fptr = fopen("kayit.txt", "r");
+	tempFile = fopen("tempKayit.txt", "w");
 
 	int change = 0;
     while (fgets(tmp, 50, fptr) != NULL) {
@@ -319,8 +341,8 @@ void updateRegister(char code[20], int num, char *date , char *event) {
 	}
 	fclose(fptr);
 	fclose(tempFile);
-	remove("D:\\Workspaces\\C Workspace\\YapisalDonemProje\\kayit.txt");
-	rename("D:\\Workspaces\\C Workspace\\YapisalDonemProje\\tempKayit.txt", "D:\\Workspaces\\C Workspace\\YapisalDonemProje\\kayit.txt");
+	remove("kayit.txt");
+	rename("tempKayit.txt", "kayit.txt");
 }
 
 void newLecture(lecture **lectureHead) {
@@ -333,7 +355,8 @@ void newLecture(lecture **lectureHead) {
         return;
     }
     printf("Olusturmak istediginiz dersin adini giriniz. \n");
-    scanf("%s", tempName);
+	fflush(stdin);
+	gets(tempName);
 
     printf("Olusturmak istediginiz dersin kontenjan sayisini giriniz. \n");
     scanf("%d", &capacity);
@@ -362,7 +385,10 @@ void closeLecture(student *studentHead, lecture **lectureHead) {
     lecture *node;
     char tempCode[20];
     printf("Kapatmak istediginiz dersin kodunu giriniz. \n");
-    scanf("%s", tempCode);
+	fflush(stdin);
+
+
+	scanf("%s", tempCode);
 
 
 	tmp = existingLecture(*lectureHead, tempCode);
@@ -402,7 +428,7 @@ void closeLecture(student *studentHead, lecture **lectureHead) {
 void syncStudentsAndLectures(lecture *lectureHead, student *studentHead) {
     FILE *fptr;
     char tmp[50];
-    fptr = fopen("D:\\Workspaces\\C Workspace\\YapisalDonemProje\\kayit.txt", "r");
+    fptr = fopen("kayit.txt", "r");
 
     while(fgets(tmp, 50, fptr) != NULL) {
 
@@ -457,7 +483,7 @@ lecture* initLectureList() {
     char tmp[70];
     lecture *lectureHead = NULL;
 
-    fptr = fopen("D:\\Workspaces\\C Workspace\\YapisalDonemProje\\inputLec.txt", "r");
+    fptr = fopen("inputLec.txt", "r");
     if (fptr == NULL) {
         exit(1);
     }
@@ -576,7 +602,7 @@ void saveLectureList(lecture *head) {
     lecture *tmp;
     tmp = head;
     FILE *fptr;
-    fptr = fopen("D:\\Workspaces\\C Workspace\\YapisalDonemProje\\inputLec.txt", "w+");
+    fptr = fopen("inputLec.txt", "w+");
     if (fptr == NULL) {
         exit(1);
     }
@@ -614,6 +640,7 @@ void deleteLectureFromStudent(lecture *lectureHead, student *studentHead) {
 		return;
 	}
 	printf("Hangi dersten silmek istiyorsunuz ?\n");
+	fflush(stdin);
 	scanf("%s", tempCode);
 
 	lecture *lectureNode = existingLecture(lectureHead, tempCode);
@@ -657,7 +684,7 @@ student* initStudentList() {
     char tmp[60];
     student *studentHead = NULL;
 
-    fptr = fopen("D:\\Workspaces\\C Workspace\\YapisalDonemProje\\input.txt", "r");
+    fptr = fopen("input.txt", "r");
     if (fptr == NULL) {
         exit(1);
     }
@@ -696,7 +723,7 @@ void saveStudentList(student *head) {
     student *tmp;
     tmp = head;
     FILE *fptr;
-    fptr = fopen("D:\\Workspaces\\C Workspace\\YapisalDonemProje\\input.txt", "w+");
+    fptr = fopen("input.txt", "w+");
     if (fptr == NULL) {
         exit(1);
     }
@@ -733,9 +760,9 @@ void addStudent(student **studentHead) {
         printf("Ogrenci listede bulunmaktadir. \n");
         return;
     }
-
+	fflush(stdin);
     printf("Lutfen ogrencinin ismini giriniz. \n");
-    scanf("%s", tempName);
+	gets(tempName);
     printf("Lutfen ogrencinin soyismini giriniz. \n");
     scanf("%s", tempSurname);
 
@@ -808,6 +835,7 @@ void deleteStudent(student **studentHead, lecture **lectureHead) {
     tmp -> next = node -> next;
     node -> next -> prev = tmp;
     free(node);*/
+   printf("Ogrenci silme islemi basari ile gerceklestirilmistir. \n");
 }
 void insertStudentByKey(student **head, int num, char name[20], char surname[20], int lecture, int credit)
 {
