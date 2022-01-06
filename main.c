@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <strings.h>
-//#include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
-
 typedef struct studentNode {
     int num;
     char name[50];
@@ -14,7 +12,6 @@ typedef struct studentNode {
     struct studentNode *next;
     struct studentNode *prev;
 }student;
-
 typedef struct lectureNode {
     char code[10];
     char name[50];
@@ -25,57 +22,47 @@ typedef struct lectureNode {
     struct lectureNode *next;
 }lecture;
 
-//void traverseStudent(student *head);
-//void traverseLecture(lecture *head);
-
-
-int binarySearch(int a[], int item, int low, int high); //
-
-student* createStudent(int num, char name[20], char surname[20], int lecture, int credit); //
-void addStudent(student **studentHead); //
-student *isValidNumber(student *head, int num);  //
+void traverseStudent(void *head);
+void traverseLecture(void *head);
+int binarySearch(int a[], int item, int low, int high);
+student* createStudent(int num, char name[20], char surname[20], int lecture, int credit);
+void addStudent(student **studentHead);
+student *isValidNumber(student *head, int num);
 void addLectureToStudent(student *studentHead, lecture *lectureHead);
 
-void insertionSort(int a[], int n, int count); //
-void syncStudentsAndLectures(lecture *lectureHead, student *studentHead); //
-student* initStudentList(); //
-void saveStudentList(student *head); //
+void insertion(int a[], int n, int count);
+void syncStudentsAndLectures(lecture *lectureHead, student *studentHead);
+student* initStudentList();
+void saveStudentList(student *head);
 void insertStudentByKey(student **head, int num, char name[20], char surname[20], int lecture, int credit); //
-//void traverseStudent(student *head); //
 
-lecture* createLecture(char code[10], char name[50], int capacity, int credit); //
-void addFrontLecture(lecture **head, char  code[10], char name[50], int capacity, int credit); //
-void insertLectureByKey(lecture **head, char code[10], char name[50], int capacity, int credit); //
-void saveLectureList(lecture *head); //
-//void traverseLecture(lecture *head); //
-lecture* initLectureList(); //
+lecture* createLecture(char code[10], char name[50], int capacity, int credit);
+void addFrontLecture(lecture **head, char  code[10], char name[50], int capacity, int credit);
+void insertLectureByKey(lecture **head, char code[10], char name[50], int capacity, int credit);
+void saveLectureList(lecture *head);
+lecture* initLectureList();
 
+void newLecture(lecture **lectureHead);
+void closeLecture(student *studentHead, lecture **lectureHead);
 
-void newLecture(lecture **lectureHead); //
-void closeLecture(student *studentHead, lecture **lectureHead); //
-
-void deleteStudent(student **head, lecture **lectureHead); //
-void updateRegister(char *code, int num, char *time, char *event); //
-void studentsOfLecture(student *studentHead, lecture *lectureHead); //
-void deleteLectureFromStudent(lecture *lectureHead, student *studentHead); //
-void deleteStudentFromLectures(lecture *lectureHead, int idx); //
-void scheduleOfStudent(lecture *lectureHead, student *studentHead); //
+void deleteStudent(student **head, lecture **lectureHead);
+void updateRegister(char *code, int num, char *time, char *event);
+void studentsOfLecture(student *studentHead, lecture *lectureHead);
+void deleteLectureFromStudent(lecture *lectureHead, student *studentHead);
+void deleteStudentFromLectures(lecture *lectureHead, int idx);
+void scheduleOfStudent(lecture *lectureHead, student *studentHead);
 
 void freeLecture(lecture **lectureHead);
 void freeStudents(student **studentHead);
 int main() {
     int menu;
+	void (*traverse[])(void*) = { traverseStudent, traverseLecture};
 
 	setlocale(LC_ALL, "Turkish");
     lecture *lectureHead = initLectureList();
-	//traverseLecture(lectureHead);
 
     student *studentHead = initStudentList();
-	//traverseStudent(studentHead);
     syncStudentsAndLectures(lectureHead, studentHead);
-
-
-
 
     do {
 		printf("\n\n\n");
@@ -88,6 +75,9 @@ int main() {
         printf("6 - Ders Kapatmak\n");
 		printf("7 - Ders katilimcilari gormek\n");
 		printf("8 - Ogrenci programi gormek\n");
+		printf("9 - Ogrenci listesini yazdirmak\n");
+		printf("10 - Ders listesini yazdirmak\n");
+		printf("Cikis icin -1\n");
         scanf("%d", &menu);
 
         switch (menu) {
@@ -113,20 +103,25 @@ int main() {
                 closeLecture(studentHead, &lectureHead);
                 break;
 			case 7:
-				//printingSpecific lecture
-				studentsOfLecture(studentHead, lectureHead);//dosyaya yazilmasi yapilacak.
+				studentsOfLecture(studentHead, lectureHead);
 				break;
 			case 8:
-				//printingSpecicifProgramme
 				scheduleOfStudent(lectureHead, studentHead);
 				break;
+			case 9:
+				traverse[0](studentHead);
+				break;
+			case 10:
+				traverse[1](lectureHead);
+				break;
           	default:
-
             	printf("Hatali giris yaptiniz. Menuye tekrar yonlendiriliyorsunuz \n\n");
             	break;
         }
 
     }while (menu != -1);
+	freeLecture(&lectureHead);
+	freeStudents(&studentHead);
     return 0;
 }
 void freeLecture(lecture **lectureHead) {
@@ -146,85 +141,24 @@ void freeStudents(student **studentHead) {
 	}
 }
 
-
-
 void updateLecture(student *studentNode, lecture *lectureNode) {
 	lectureNode -> students = (int*)realloc(lectureNode -> students, (lectureNode -> attendency + 1) * sizeof (int));
-	insertionSort(lectureNode -> students, studentNode -> num, lectureNode -> attendency + 1);
+	insertion(lectureNode -> students, studentNode -> num, lectureNode -> attendency + 1);
 	lectureNode -> attendency++;
 }
 void updateStudent(student *studentNode, lecture *lectureNode) {
 	studentNode -> credit += lectureNode -> credit;
 	studentNode -> lectureCount++;
 }
-
 void updateNodes(student *studentNode, lecture *lectureNode) {
 	updateLecture(studentNode, lectureNode);
 	updateStudent(studentNode, lectureNode);
-}/*
-lecture* getToLectureNode(lecture *lectureHead, char *code) {
-	while (lectureHead != NULL && strcmp(lectureHead -> code, code) != 0) {
-		lectureHead = lectureHead -> next;
-	}
-
-	return lectureHead;
 }
-student* getToStudentNode(student *studentHead, int num) {
-	while (studentHead != NULL && studentHead -> num != num) {
-		studentHead = studentHead -> next;
-	}
-
-	return studentHead;
-}
-
-int	 getStudentNum() {
-	int num;
-	printf("Ogrencinin numarasini giriniz. \n");
-	scanf(" %d", &num);
-	return num;
-}
-int getLectureCapacity() {
-	int num;
-	printf("Dersin kapasitesini giriniz. \n");
-	scanf(" %d", &num);
-	return num;
-}
-int getLectureCredit() {
-	int num;
-	printf("Dersin kredisini giriniz. \n");
-	scanf(" %d", &num);
-	return num;
-}
-char* getStudentName() {
-	char *name;
-	printf("Ogrencinin adini giriniz. \n");
-	scanf(" %s", &name);
-	return name;
-}
-char* getStudentSurname() {
-	char *name;
-	printf("Ogrencinin soyadini giriniz. \n");
-	scanf(" %s", &name);
-	return name;
-}
-char* getLectureCode() {
-	char *code;
-	printf("Dersin kodunu giriniz. \n");
-	scanf(" %s", &code);
-	return code;
-}
-char* getLectureName() {
-	char *code;
-	printf("Dersin adini giriniz. \n");
-	scanf(" %s", &code);
-	return code;
-}
-*/
 int canRegister(student *studentNode, lecture *lectureNode) {
 
 	int idx = 0, maxLecture = 10, maxCredit = 30;
 	int attendency = lectureNode -> attendency;
-	do {//derse onceden kayitli olup olmadigi kontrolu, binary search ile yapılabilir.
+	do {
 		if (studentNode -> num == lectureNode -> students[idx++]) {
 			return 1;
 		}
@@ -236,25 +170,17 @@ int canRegister(student *studentNode, lecture *lectureNode) {
 	if (studentNode -> lectureCount + 1 > maxLecture){
 		return 3;
 	}
+	if (lectureNode -> attendency + 1 > lectureNode -> capacity) {
+		return 4;
+	}
 	return 0;
-}/*
-int isValidLecture(lecture *lectureHead, char *code) {
-	while (lectureHead != NULL && strcmp(lectureHead -> code, code) != 0) {
-		lectureHead = lectureHead -> next;
-	}
-	if (lectureHead == NULL) {
-		return 0;
-	}
-	return 1;
-}*/
+}
 lecture* existingLecture(lecture *lectureHead, char code[20]) {
 	while (lectureHead != NULL && strcmp(lectureHead -> code, code) != 0) {
 		lectureHead = lectureHead -> next;
 	}
 	return lectureHead;
 }
-
-
 void addLectureToStudent(student *studentHead, lecture *lectureHead){
 	int tempNum;
     char tempCode[20];
@@ -296,17 +222,21 @@ void addLectureToStudent(student *studentHead, lecture *lectureHead){
 			else if (available == 3){
 				printf("Maximum sayida ders kaydiniz bulunmaktadir. Bu derse kayit yaptiramazsiniz. \n");
 			}
+			else if (available == 4){
+				printf("Maalesef dersin kontenjani dolmustur. Bu derse kayit yaptiramazsiniz.  \n");
+			}
 			printf("Eklemek istediginiz dersin kodunu giriniz. Birden cok ders eklemek icin sirayla giris yapiniz.\n");
 			scanf("%s", tempCode);
 		}
     }
+	printf("Ders ekleme islemi basari ile tamamlandi. \n");
 }
 void updateRegister(char code[20], int num, char *date , char *event) {
 
     FILE *fptr, *tempFile;
     char tmp[255];
     char temp[5][60];
-    fptr = fopen("kayit.txt", "r");
+    fptr = fopen("OgrenciDersKayit.txt", "r");
 	tempFile = fopen("tempKayit.txt", "w");
 
 	int change = 0;
@@ -341,10 +271,9 @@ void updateRegister(char code[20], int num, char *date , char *event) {
 	}
 	fclose(fptr);
 	fclose(tempFile);
-	remove("kayit.txt");
-	rename("tempKayit.txt", "kayit.txt");
+	remove("OgrenciDersKayit.txt");
+	rename("tempKayit.txt", "OgrenciDersKayit.txt");
 }
-
 void newLecture(lecture **lectureHead) {
     int capacity, credit;
     char tempCode[20], tempName[50];
@@ -367,6 +296,7 @@ void newLecture(lecture **lectureHead) {
     insertLectureByKey(lectureHead, tempCode, tempName, capacity, credit);
 
     saveLectureList(*lectureHead);
+	printf("Ders olusturma islemi basari ile tamamlandi. \n");
 }
 void replacingCredits(student *studentHead, lecture *tmp) {
 	for (int i = 0; i < tmp -> attendency; i++) {
@@ -424,11 +354,12 @@ void closeLecture(student *studentHead, lecture **lectureHead) {
 
     saveLectureList(*lectureHead);
 	saveStudentList(studentHead);
+	printf("Ders kapatma islemi basari ile tamamlandi. \n");
 }
 void syncStudentsAndLectures(lecture *lectureHead, student *studentHead) {
     FILE *fptr;
     char tmp[50];
-    fptr = fopen("kayit.txt", "r");
+    fptr = fopen("OgrenciDersKayit.txt", "r");
 
     while(fgets(tmp, 50, fptr) != NULL) {
 
@@ -453,7 +384,6 @@ void syncStudentsAndLectures(lecture *lectureHead, student *studentHead) {
 			student *studentNode = isValidNumber(studentHead, num);
 			if (studentNode == NULL) {
 				printf("Hatali kullanici girisi. \n");
-
 			}
 			else if (lectureNode == NULL) {
 				printf("Hatali ders girisi. \n");
@@ -472,6 +402,9 @@ void syncStudentsAndLectures(lecture *lectureHead, student *studentHead) {
 				else if (available == 3){
 					printf("Maximum sayida ders kaydiniz bulunmaktadir. Bu derse kayit yaptiramazsiniz. \n");
 				}
+				else if (available == 4){
+					printf("Maalesef dersin kontenjani dolmustur. Bu derse kayit yaptiramazsiniz.  \n");
+				}
 			}
         }
     }
@@ -483,7 +416,7 @@ lecture* initLectureList() {
     char tmp[70];
     lecture *lectureHead = NULL;
 
-    fptr = fopen("inputLec.txt", "r");
+    fptr = fopen("dersler.txt", "r");
     if (fptr == NULL) {
         exit(1);
     }
@@ -602,7 +535,7 @@ void saveLectureList(lecture *head) {
     lecture *tmp;
     tmp = head;
     FILE *fptr;
-    fptr = fopen("inputLec.txt", "w+");
+    fptr = fopen("dersler.txt", "w+");
     if (fptr == NULL) {
         exit(1);
     }
@@ -615,18 +548,7 @@ void saveLectureList(lecture *head) {
 
 
     fclose(fptr);
-}/*
-void printLecture(lecture *n) {
-    printf("%s, %s, %d, %d", n -> code, n -> name, n -> capacity, n -> credit);
 }
-void traverseLecture(lecture *head) {
-    lecture *tmp = head;
-    while (tmp != NULL) {
-        printLecture(tmp);
-        tmp = tmp->next;
-        printf("\n");
-    }
-}*/
 void deleteLectureFromStudent(lecture *lectureHead, student *studentHead) {
 	int tempNum;
 	char tempCode[20];
@@ -677,14 +599,14 @@ void deleteLectureFromStudent(lecture *lectureHead, student *studentHead) {
 	updateRegister(tempCode, tempNum, date, "birakti");
 	saveStudentList(studentHead);
 	saveLectureList(lectureHead);
+	printf("Ders birakma islemi basari ile tamamlandi. \n");
 }
-
 student* initStudentList() {
     FILE *fptr;
     char tmp[60];
     student *studentHead = NULL;
 
-    fptr = fopen("input.txt", "r");
+    fptr = fopen("ogrenciler.txt", "r");
     if (fptr == NULL) {
         exit(1);
     }
@@ -723,7 +645,7 @@ void saveStudentList(student *head) {
     student *tmp;
     tmp = head;
     FILE *fptr;
-    fptr = fopen("input.txt", "w+");
+    fptr = fopen("ogrenciler.txt", "w+");
     if (fptr == NULL) {
         exit(1);
     }
@@ -769,6 +691,7 @@ void addStudent(student **studentHead) {
     insertStudentByKey(studentHead, tempNum, tempName, tempSurname, 0, 0);
 
     saveStudentList(*studentHead);
+	printf("Ogrenci ekleme islemi basari ile tamamlandi. \n");
 }
 void deleteStudentFromLectures(lecture *lectureNode, int idx) {
 		int attendency = lectureNode -> attendency;
@@ -797,24 +720,15 @@ void deleteStudent(student **studentHead, lecture **lectureHead) {
 	if (*studentHead == studentNode) {
 		*studentHead = studentNode -> next;
 		(*studentHead) -> prev = NULL;
-
-
+	}
+	else if (studentNode -> next == NULL) {
+		studentNode -> prev -> next = NULL;
 	}
 	else {
 		studentNode -> prev -> next = studentNode -> next;
 		studentNode -> next -> prev = studentNode -> prev;
 	}
 	free(studentNode);
-
-	/*
-    if (tmp -> num == tempNum) {
-        *studentHead = (*studentHead) -> next;
-        (*studentHead) -> prev = NULL;
-		ptr -> students = realloc( ptr -> students, 0);
-		ptr -> attendency = 0;
-        free(tmp);
-        return;
-    }*/
 
 	while (ptr != NULL) {
 		int idx = 0, found = 0;
@@ -830,11 +744,6 @@ void deleteStudent(student **studentHead, lecture **lectureHead) {
 		ptr = ptr -> next;
 	}
 
-   /* student  *node;
-    node = tmp -> next;
-    tmp -> next = node -> next;
-    node -> next -> prev = tmp;
-    free(node);*/
    printf("Ogrenci silme islemi basari ile gerceklestirilmistir. \n");
 }
 void insertStudentByKey(student **head, int num, char name[20], char surname[20], int lecture, int credit)
@@ -869,19 +778,7 @@ void insertStudentByKey(student **head, int num, char name[20], char surname[20]
     tmp -> next = newNode;
     newNode -> prev = tmp;						// Araya eklenmesi.
 
-}/*
-void printStudent(student *n) {
-    printf("%d, %s, %s ", n -> num, n -> name, n -> surname);
 }
-void traverseStudent(student *head) {
-    student *tmp = head;
-    while (tmp != NULL) {
-        printStudent(tmp);
-        tmp = tmp->next;
-        printf("\n");
-    }
-}
-*/
 int binarySearch(int a[], int item, int low, int high)
 {
 	if (high <= low)
@@ -898,7 +795,7 @@ int binarySearch(int a[], int item, int low, int high)
 	return binarySearch(a, item, low,
 		mid - 1);
 }
-void insertionSort(int a[], int n, int count)
+void insertion(int a[], int n, int count)
 {
 	int loc, j;
 
@@ -917,30 +814,53 @@ void insertionSort(int a[], int n, int count)
     }
     a[j + 1] = n;
 }
-
 void studentsOfLecture(student *studentHead, lecture *lectureHead) {
 	FILE *fptr;
 
-	char code[20];
-	printf("Hangi dersi alan ogrencileri yazdirmak istiyorsunuz ?\n");
-	scanf(" %s", code);
+	while(lectureHead != NULL) {
+		if (lectureHead -> attendency > 0) {
+			char fileName[20] = "";
 
-	lecture *lectureNode = existingLecture(lectureHead, code);
-	if (lectureHead == NULL) {
-		printf("Girdiginiz ders sistemde kayitli degildir.\n");
-		printf("Ana menuye yonlendiriliyorsunuz. \n");
-		return;
-	}
-	char fileName[20];
-	strcat(fileName, lectureNode -> code);
-	strcat(fileName, ".txt");
-	fptr = fopen(fileName, "a");
+			strcat(fileName, lectureHead -> code);;
+			strcat(fileName, ".txt");
+			fptr = fopen(fileName, "a");
 
-	for (int i = 0; i < lectureNode -> attendency; i++) {
-		int num = lectureNode -> students [i];
-		student *studentNode = isValidNumber(studentHead, num);
-		fprintf(fptr, "%d %s %s \n", studentNode -> num, studentNode -> name, studentNode -> surname);
+			for (int i = 0; i < lectureHead -> attendency; i++) {
+				int num = lectureHead -> students [i];
+				student *studentNode = isValidNumber(studentHead, num);
+
+				fprintf(fptr, "%d %s %s \n", studentNode -> num, studentNode -> name, studentNode -> surname);
+			}
+			fclose(fptr);
+		}
+		lectureHead = lectureHead -> next;
 	}
-	fclose(fptr);
-	printf("Dosyaniz basari ile olusturuldu. \n");
+	printf("Dosyalariniz basari ile olusturuldu. \n");
+}
+
+void printLecture(lecture *n) {
+	printf("%s, %s, %d, %d", n -> code, n -> name, n -> capacity, n -> credit);
+	for (int i = 0; i < n -> attendency; i++) {
+		printf("\n%d", n -> students [i]);
+	}
+	printf("\n");
+}
+void traverseLecture(void *head) {
+	lecture *tmp = (lecture*)head;
+	while (tmp != NULL) {
+		printLecture(tmp);
+		tmp = tmp->next;
+		printf("\n");
+	}
+}
+void printStudent(student *n) {
+	printf("%d, %s, %s ", n -> num, n -> name, n -> surname);
+}
+void traverseStudent(void *head) {
+	student *tmp = (student*)head;
+	while (tmp != NULL) {
+		printStudent(tmp);
+		tmp = tmp->next;
+		printf("\n");
+	}
 }
